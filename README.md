@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Helpdesk Ticketing System
 
-## Getting Started
+A full-stack support ticketing app built with Next.js App Router, demonstrating RSC/Client Component architecture, role-based access control, Zustand client state, Zod-validated forms, Prisma/SQLite, and transactional email via Resend.
 
-First, run the development server:
+## Tech Stack
+
+- **Framework:** Next.js 16 
+- **UI:** shadcn/ui 
+- **Client State:** Zustand
+- **Forms/Validation:** React Hook Form + Zod
+- **Database/ORM:** SQLite + Prisma
+- **Auth:** Cookie-based session 
+- **Email:** Resend + EmailLog tracking
+
+## Features
+
+- Login with hashed passwords, session stored in an HTTP-only cookie
+- Role-based access control (ADMIN / MEMBER / GUEST) enforced in `middleware.ts`
+- Dashboard listing all tickets 
+- Create-ticket form using RHF + Zod validation
+- Server Action creates the ticket, re-validates with Zod server-side, and revalidates the dashboard
+- Email notification sent via Resend on ticket creation, with delivery status logged to `EmailLog` (SENT/FAILED)
+
+## Data Models
+
+- **Role** — ADMIN, MEMBER, GUEST
+- **User** — belongs to a Role
+- **Ticket** — belongs to a User (title, description, status, priority)
+- **AuditLog** — action history per user
+- **EmailLog** — email dispatch history, status tracking
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install --legacy-peer-deps
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Create `.env`:
+```
+DATABASE_URL="file:./dev.db"
+RESEND_API_KEY="your_resend_key"
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Push schema and seed data:
+```bash
+npx prisma generate
+npx prisma db push
+npx prisma db seed
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Run the app:
+```bash
+npm run dev
+```
 
-## Learn More
+## Seeded Accounts
 
-To learn more about Next.js, take a look at the following resources:
+| Email | Password | Role |
+|---|---|---|
+| admin@helpdesk.dev | password123 | ADMIN |
+| member@helpdesk.dev | password123 | MEMBER |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Role Permissions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Role | View Tickets | Create Ticket | Admin Page |
+|---|---|---|---|
+| ADMIN | Yes | Yes | Yes |
+| MEMBER | Yes | Yes | No |
+| GUEST | Yes | No | No |
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+  page.tsx              
+  dashboard/page.tsx     
+components/
+  ticket-form.tsx        
+lib/
+  db.ts                  
+  session.ts              
+  store.ts                
+  schema.ts              
+  actions/
+    auth.ts               
+    ticket.ts              
+prisma/
+  schema.prisma
+  seed.ts
+middleware.ts            
+```
